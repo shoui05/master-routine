@@ -254,6 +254,36 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 /* ── TOAST ── */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--card2);border:1px solid rgba(34,211,200,.3);color:var(--teal);font-size:12px;font-family:'JetBrains Mono',monospace;letter-spacing:.05em;padding:9px 18px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;opacity:0;z-index:999;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* ── AI CHAT ── */
+.ai-wrap{display:flex;flex-direction:column;height:calc(100vh - 120px);padding:0;}
+.ai-messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.ai-messages::-webkit-scrollbar{width:4px;}
+.ai-messages::-webkit-scrollbar-track{background:transparent;}
+.ai-messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+.ai-msg{max-width:88%;display:flex;flex-direction:column;gap:3px;animation:fadeIn .2s ease;}
+.ai-msg.user{align-self:flex-end;align-items:flex-end;}
+.ai-msg.bot{align-self:flex-start;align-items:flex-start;}
+.ai-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.65;}
+.ai-msg.user .ai-bubble{background:linear-gradient(135deg,var(--accent),#5b4ee0);color:#fff;border-bottom-right-radius:4px;}
+.ai-msg.bot .ai-bubble{background:var(--card);border:1px solid var(--border);color:var(--txt2);border-bottom-left-radius:4px;}
+.ai-msg.bot .ai-bubble strong{color:var(--txt);}
+.ai-time{font-size:9px;color:var(--txt3);font-family:'JetBrains Mono',monospace;}
+.ai-typing{display:flex;align-items:center;gap:5px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px;width:fit-content;}
+.ai-typing span{width:6px;height:6px;background:var(--accent2);border-radius:50%;animation:typing .9s infinite;}
+.ai-typing span:nth-child(2){animation-delay:.15s;}
+.ai-typing span:nth-child(3){animation-delay:.3s;}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-5px);opacity:1;}}
+.ai-input-row{padding:10px 16px 16px;display:flex;gap:8px;background:rgba(7,8,15,.95);backdrop-filter:blur(12px);border-top:1px solid var(--border);}
+.ai-input{flex:1;background:var(--card);border:1px solid var(--border2);border-radius:22px;padding:10px 16px;color:var(--txt);font-family:'Hind Siliguri',sans-serif;font-size:13px;outline:none;resize:none;max-height:80px;line-height:1.5;}
+.ai-input:focus{border-color:var(--accent);}
+.ai-input::placeholder{color:var(--txt3);}
+.ai-send{width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--accent),#5b4ee0);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px var(--glow);transition:transform .15s;-webkit-tap-highlight-color:transparent;align-self:flex-end;}
+.ai-send:active{transform:scale(.9);}
+.ai-quick{display:flex;gap:6px;padding:8px 16px 0;overflow-x:auto;scrollbar-width:none;}
+.ai-quick::-webkit-scrollbar{display:none;}
+.ai-q-btn{flex-shrink:0;padding:6px 12px;border-radius:99px;border:1px solid var(--border);background:var(--card);color:var(--txt2);font-family:'Hind Siliguri',sans-serif;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+.ai-q-btn:active{background:var(--card2);}
 </style>
 </head>
 <body>
@@ -267,6 +297,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
     <button class="tab" onclick="switchTab('bmi',this)"><span class="ti">⚖️</span>BMI</button>
     <button class="tab" onclick="switchTab('bmr',this)"><span class="ti">🔥</span>BMR</button>
     <button class="tab" onclick="switchTab('stopwatch',this)"><span class="ti">⏱️</span>স্টপওয়াচ</button>
+    <button class="tab" onclick="switchTab('ai',this)"><span class="ti">🤖</span>AI সহায়ক</button>
   </div>
   <div class="prog-bar" id="progBarEl">
     <div class="prog-meta">
@@ -626,6 +657,30 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opac
 </div>
 </div>
 
+<!-- ══════ AI PAGE ══════ -->
+<div class="page" id="page-ai">
+  <div class="ai-quick" id="aiQuick">
+    <button class="ai-q-btn" onclick="quickQ(this)">আজকের ব্যায়াম কী?</button>
+    <button class="ai-q-btn" onclick="quickQ(this)">পুশ-আপ কীভাবে করব?</button>
+    <button class="ai-q-btn" onclick="quickQ(this)">ওজন বাড়াতে কী খাব?</button>
+    <button class="ai-q-btn" onclick="quickQ(this)">পায়ে ব্যথা হলে কী করব?</button>
+    <button class="ai-q-btn" onclick="quickQ(this)">কতদিনে মাসল দেখা যাবে?</button>
+    <button class="ai-q-btn" onclick="quickQ(this)">BMI কত হলে ভালো?</button>
+  </div>
+  <div class="ai-messages" id="aiMessages">
+    <div class="ai-msg bot">
+      <div class="ai-bubble">আস-সালামু আলাইকুম! 👋<br><br>আমি তোমার <strong>ব্যক্তিগত স্বাস্থ্য ও ব্যায়াম সহায়ক</strong>। ব্যায়াম, খাবার, BMI, রুটিন — যেকোনো প্রশ্ন করো, সাথে সাথে উত্তর দেব।<br><br>নিচে কিছু সাধারণ প্রশ্নও দেওয়া আছে — ট্যাপ করলেই জবাব পাবে! 😊</div>
+      <div class="ai-time">এইমাত্র</div>
+    </div>
+  </div>
+  <div class="ai-input-row">
+    <textarea class="ai-input" id="aiInput" placeholder="প্রশ্ন লেখো..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI();}"></textarea>
+    <button class="ai-send" onclick="sendAI()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -718,55 +773,81 @@ function renderLaps(){
   }).reverse().join('');
 }
 
-// ── Workout Data
-const WO=[
-  {name:'সোমবার — 💪 পুশ-আপ দিন',sub:'বুক + কাঁধ + ট্রাইসেপ',badges:[{t:'পুশ-আপ',c:'rgba(124,106,255,.15)',tc:'#a89aff'}],
-    exs:[
-      {n:'সাধারণ পুশ-আপ',s:'৩ সেট × ১০ রেপ',how:'মাটিতে উপুড় হয়ে হাত কাঁধ-সমান চওড়া রাখো। শরীর সোজা রেখে বুক মাটির কাছে নামাও, তারপর উঠো। সেটের মাঝে ৯০ সেকেন্ড বিশ্রাম।',tips:['ফর্ম সংখ্যার চেয়ে বেশি জরুরি','প্রতি সপ্তাহে ২-৩টি বাড়াও','না পারলে হাঁটু মাটিতে রেখে করো']},
-      {n:'ওয়াইড পুশ-আপ',s:'৩ সেট × ৮ রেপ',how:'হাত স্বাভাবিকের চেয়ে বেশি চওড়া। বুকের বাইরের অংশ কাজ করে।',tips:['কনুই বাইরে','ধীরে নামো']},
-      {n:'ডায়মন্ড পুশ-আপ',s:'২ সেট × ৬ রেপ',how:'দুই হাতের আঙুল মিলিয়ে হীরার আকার। ট্রাইসেপে চাপ দেয়।',tips:['কম রেপ দিয়ে শুরু করো','কনুই শরীরের কাছে']}
-    ]},
-  {name:'মঙ্গলবার — 🦵 পায়ের দিন',sub:'উরু + পিন্ডলি + কোর',badges:[{t:'পা',c:'rgba(244,63,94,.1)',tc:'#f43f5e'}],
-    exs:[
-      {n:'স্কোয়াট',s:'৪ সেট × ১৫ রেপ',how:'পা কাঁধ-সমান। চেয়ারে বসার মতো নিচে নামো — হাঁটু পায়ের আঙুলের বাইরে যাবে না।',tips:['পিঠ সোজা','গোড়ালি মাটিতে','দেয়ালে হেলান দিয়েও করতে পারো']},
-      {n:'লাঞ্জ',s:'৩ সেট × ১০ রেপ (প্রতি পায়ে)',how:'এক পা সামনে রেখে নামো, পেছনের হাঁটু প্রায় মাটি ছুঁবে।',tips:['সামনের হাঁটু ৯০°','শরীর সোজা']},
-      {n:'ক্যাফ রেইজ',s:'৩ সেট × ২০ রেপ',how:'সোজা দাঁড়িয়ে পায়ের আঙুলে উঠো, ধীরে নামো।',tips:['দেয়ালে হাত দাও','পায়ের পিছনে টান অনুভব করবে']},
-      {n:'প্ল্যাংক',s:'৩ সেট × ৩০ সেকেন্ড',how:'কনুইয়ে ভর দিয়ে শরীর তক্তার মতো সোজা রাখো।',tips:['পেট ভেতরে টানো','শ্বাস নিতে ভুলবে না']}
-    ]},
-  {name:'বুধবার — 💪 পুশ-আপ দিন',sub:'বুক + কাঁধ (বৈচিত্র্য)',badges:[{t:'পুশ-আপ',c:'rgba(124,106,255,.15)',tc:'#a89aff'}],
-    exs:[
-      {n:'সাধারণ পুশ-আপ',s:'৩ সেট × ১২ রেপ',how:'আগের চেয়ে ২টি বেশি। ধীরে নামো (৩ সেকেন্ড), দ্রুত উঠো।',tips:['এই সপ্তাহে ২ বেশি করার লক্ষ্য']},
-      {n:'ইনক্লাইন পুশ-আপ',s:'৩ সেট × ১০ রেপ',how:'হাত চেয়ারে রেখে পুশ-আপ। বুকের নিচের অংশে কাজ হয়।',tips:['হাত যত উঁচু তত সহজ']},
-      {n:'ডিক্লাইন পুশ-আপ',s:'২ সেট × ৮ রেপ',how:'পা চেয়ারে তুলে পুশ-আপ। উপরের বুক ও কাঁধে কাজ হয়।',tips:['শুরুতে বেশি উঁচু না করলেও চলবে']}
-    ]},
-  {name:'বৃহস্পতিবার — 🦵 পায়ের দিন',sub:'উরু + কোর (উন্নত)',badges:[{t:'পা',c:'rgba(244,63,94,.1)',tc:'#f43f5e'}],
-    exs:[
-      {n:'স্কোয়াট',s:'৪ সেট × ১৮ রেপ',how:'একই নিয়ম, একটু বেশি সংখ্যা।',tips:['শেষ সেটে কষ্ট হওয়াটাই স্বাভাবিক','হাঁটু ব্যথায় থামো']},
-      {n:'জাম্পিং স্কোয়াট',s:'৩ সেট × ১০ রেপ',how:'স্কোয়াট থেকে উঠে লাফ দাও। পা শক্তিশালী হয়।',tips:['নামার সময় হাঁটু বাঁকা','পায়ের সামনে ল্যান্ড করো']},
-      {n:'লেগ রেইজ',s:'৩ সেট × ১২ রেপ',how:'পিঠে শুয়ে পা সোজা রেখে উপরে তোলো।',tips:['পুরোপুরি নামাবে না — মাটি থেকে কয়েক ইঞ্চি উপরে রাখো']},
-      {n:'প্ল্যাংক',s:'৩ সেট × ৪০ সেকেন্ড',how:'আগেরবারের চেয়ে ১০ সেকেন্ড বেশি।',tips:['প্রতি সপ্তাহে ১০ সেকেন্ড বাড়াও']}
-    ]},
-  {name:'শুক্রবার — 😴 সম্পূর্ণ বিশ্রাম',rest:true,
-    restMsg:'আজ কোনো ব্যায়াম নেই — এটা নিয়মের অংশ। বিশ্রামের সময়ই মাসল তৈরি হয়। ভালো ঘুমাও, বেশি পানি খাও।'},
-  {name:'শনিবার — 💪 পুশ-আপ (চ্যালেঞ্জ)',sub:'সর্বোচ্চ পারফরম্যান্স',badges:[{t:'পুশ-আপ',c:'rgba(124,106,255,.15)',tc:'#a89aff'},{t:'চ্যালেঞ্জ',c:'rgba(34,197,94,.1)',tc:'#22c55e'}],
-    exs:[
-      {n:'সাধারণ পুশ-আপ',s:'৩ সেট × সর্বোচ্চ',how:'আজ যত পারো করো। এই সংখ্যা প্রতি সপ্তাহে ট্র্যাক করো।',tips:['নিজেকে চ্যালেঞ্জ করো']},
-      {n:'ওয়াইড পুশ-আপ',s:'৩ সেট × ১০ রেপ',how:'হাত চওড়া করে পুশ-আপ।',tips:['ধীরে নামো']},
-      {n:'শোল্ডার ট্যাপ',s:'৩ সেট × ১০ রেপ (প্রতি হাতে)',how:'পুশ-আপ পজিশনে থেকে হাত তুলে বিপরীত কাঁধ ছোঁও।',tips:['কোর শক্ত — শরীর দুলবে না']}
-    ]},
-  {name:'রবিবার — 🦵 পায়ের দিন (ফিনিশার)',sub:'সাপ্তাহিক শেষ সেশন',badges:[{t:'পা',c:'rgba(244,63,94,.1)',tc:'#f43f5e'},{t:'ফিনিশার',c:'rgba(245,158,11,.1)',tc:'#f59e0b'}],
-    exs:[
-      {n:'স্কোয়াট',s:'৪ সেট × ২০ রেপ',how:'সপ্তাহের শেষ পায়ের সেশন — কষ্ট করো। ধীরে নামো, দ্রুত উঠো।',tips:['শেষ সেটে সবচেয়ে কষ্ট হবে — সেটাই লক্ষণ ভালো']},
-      {n:'লাঞ্জ',s:'৩ সেট × ১২ রেপ (প্রতি পায়ে)',how:'এক পা সামনে রেখে নামো।',tips:['ধীরে করো']},
-      {n:'ক্যাফ রেইজ',s:'৩ সেট × ২৫ রেপ',how:'পায়ের আঙুলে উঠো, ধীরে নামো।',tips:['এক পায়ে করলে আরও কঠিন']},
-      {n:'প্ল্যাংক',s:'৩ সেট × ৬০ সেকেন্ড (লক্ষ্য)',how:'১ মিনিট ধরার চেষ্টা করো।',tips:['এক মাস পরে সহজ মনে হবে']}
-    ]}
-];
+// ── Workout Data — শনি=পুশ+কোর, রবি=ব্যাক+লেগ, একদিন পরপর, শুক্র বিশ্রাম
+// সূচনা শনিবার থেকে। প্যাটার্ন: শনি(A), রবি(B), সোম(A), মঙ্গল(B), বুধ(A), বৃহঃ(B), শুক্র(R) ...
+const WO_A = {
+  type:'A',
+  name:'💪 পুশ-আপ + কোর দিন',
+  sub:'বুক • কাঁধ • ট্রাইসেপ • কোর',
+  badges:[{t:'পুশ-আপ',c:'rgba(124,106,255,.15)',tc:'#a89aff'},{t:'কোর',c:'rgba(34,211,200,.1)',tc:'#22d3c8'}],
+  exs:[
+    {n:'সাধারণ পুশ-আপ',s:'৩ সেট × ১০ রেপ',
+     how:'মাটিতে উপুড় হয়ে হাত কাঁধ-সমান চওড়া রাখো। শরীর সোজা রেখে বুক মাটির কাছে নামাও (৩ সেকেন্ড), তারপর উঠো। সেটের মাঝে ৯০ সেকেন্ড বিশ্রাম।',
+     tips:['ফর্ম সংখ্যার চেয়ে বেশি জরুরি','প্রতি সপ্তাহে ২-৩টি বাড়াও','না পারলে হাঁটু মাটিতে রেখে করো']},
+    {n:'ওয়াইড পুশ-আপ',s:'৩ সেট × ৮ রেপ',
+     how:'হাত স্বাভাবিকের চেয়ে বেশি চওড়া করে পুশ-আপ। বুকের বাইরের অংশ কাজ করে।',
+     tips:['কনুই বাইরের দিকে','ধীরে নামো']},
+    {n:'ডায়মন্ড পুশ-আপ',s:'২ সেট × ৬ রেপ',
+     how:'দুই হাতের আঙুল মিলিয়ে হীরার আকার বানাও। ট্রাইসেপে বেশি চাপ পড়ে।',
+     tips:['কম রেপ দিয়ে শুরু করো','কনুই শরীরের কাছে থাকবে']},
+    {n:'প্ল্যাংক',s:'৩ সেট × ৩০ সেকেন্ড',
+     how:'কনুইয়ে ভর দিয়ে শরীর মাথা থেকে পা পর্যন্ত সোজা তক্তার মতো ধরে রাখো।',
+     tips:['পেট ভেতরে টেনে রাখো','শ্বাস নিতে ভুলবে না','প্রতি সপ্তাহে ১০ সেকেন্ড বাড়াও']},
+    {n:'ক্র্যাঞ্চ',s:'৩ সেট × ১৫ রেপ',
+     how:'পিঠে শুয়ে হাঁটু ভাঁজ করো। হাত মাথার পেছনে রেখে কাঁধ মাটি থেকে তোলো, ১ সেকেন্ড ধরো।',
+     tips:['ঘাড় টানবে না — পেটের শক্তি দিয়ে উঠো','উপরে গিয়ে একটু চেপে ধরো']}
+  ]
+};
+const WO_B = {
+  type:'B',
+  name:'🦵 ব্যাক মাসল + লেগ দিন',
+  sub:'পিঠ • বাইসেপ • উরু • পিন্ডলি',
+  badges:[{t:'ব্যাক',c:'rgba(245,158,11,.1)',tc:'#f59e0b'},{t:'লেগ',c:'rgba(244,63,94,.1)',tc:'#f43f5e'}],
+  exs:[
+    {n:'সুপারম্যান হোল্ড',s:'৩ সেট × ১২ রেপ',
+     how:'মাটিতে উপুড় হয়ে শুয়ে দুই হাত সামনে ছড়িয়ে দাও। একসাথে হাত-পা উপরে তুলে ৩-৫ সেকেন্ড ধরো, তারপর নামাও।',
+     tips:['পিঠের নিচের অংশ মজবুত করে','মাথা খুব বেশি উপরে তুলবে না','ধীরে ধীরে করো']},
+    {n:'ইনভার্টেড রো (টেবিল রো)',s:'৩ সেট × ১০ রেপ',
+     how:'শক্ত টেবিলের নিচে শুয়ে টেবিলের প্রান্ত দুই হাতে ধরো। বুক টেবিলের দিকে টেনে নাও, পায়ের গোড়ালি মাটিতে থাকবে।',
+     tips:['শরীর সোজা তক্তার মতো রাখো','পিঠের মাসল দিয়ে টানো, হাত দিয়ে নয়','না পারলে হাঁটু বাঁকিয়ে করো']},
+    {n:'পুল-আপ / নেগেটিভ পুল-আপ',s:'৩ সেট × যত পারো',
+     how:'দরজার চৌকাঠ বা শক্ত রড ধরো। উপরে উঠার চেষ্টা করো। না পারলে — লাফিয়ে উপরে উঠে ধীরে ধীরে (৫ সেকেন্ড) নামো।',
+     tips:['শুরুতে ২-৩টিও যথেষ্ট','নেগেটিভ পুল-আপ মাসল দ্রুত তৈরি করে','প্রতি সপ্তাহে ১টি বাড়াও']},
+    {n:'স্কোয়াট',s:'৪ সেট × ১৫ রেপ',
+     how:'পা কাঁধ-সমান ফাঁক করে সোজা দাঁড়াও। চেয়ারে বসার মতো নিচে নামো — হাঁটু পায়ের আঙুলের বাইরে যাবে না।',
+     tips:['পিঠ সোজা রাখো','গোড়ালি সবসময় মাটিতে','দেয়ালে হেলান দিয়েও করতে পারো']},
+    {n:'লাঞ্জ',s:'৩ সেট × ১০ রেপ (প্রতি পায়ে)',
+     how:'এক পা সামনে রেখে নিচে নামো, পেছনের হাঁটু প্রায় মাটি ছুঁবে। উঠে পা বদলাও।',
+     tips:['সামনের হাঁটু ৯০ ডিগ্রি','শরীর সোজা রাখো']},
+    {n:'ক্যাফ রেইজ',s:'৩ সেট × ২০ রেপ',
+     how:'সোজা দাঁড়িয়ে পায়ের আঙুলে উঠো, ধীরে নামো।',
+     tips:['দেয়ালে হাত দিয়ে ব্যালেন্স রাখো','পায়ের পেছনে টান অনুভব করবে']}
+  ]
+};
+const WO_R = {type:'R',name:'শুক্রবার — 😴 সম্পূর্ণ বিশ্রাম',rest:true,
+  restMsg:'আজ কোনো ব্যায়াম নেই — এটা নিয়মের অংশ, ফাঁকি নয়। বিশ্রামের সময়ই মাসল তৈরি হয়। ভালো ঘুমাও, বেশি পানি খাও।'};
+
+// ৭ দিনের সাইকেল: শনি=A, রবি=B, সোম=A, মঙ্গল=B, বুধ=A, বৃহঃ=B, শুক্র=R
+const WO_WEEK=[WO_A,WO_B,WO_A,WO_B,WO_R,WO_A,WO_B]; // index 0=সোম...6=রবি (JS getDay: 0=রবি)
+// Day buttons: সোম(1)=A, মঙ্গল(2)=B, বুধ(3)=A, বৃহঃ(4)=B, শুক্র(5)=R, শনি(6)=A, রবি(0)=B
+const DAY_MAP={0:WO_B,1:WO_A,2:WO_B,3:WO_A,4:WO_B,5:WO_R,6:WO_A};
+const DAY_NAMES=['সোম','মঙ্গল','বুধ','বৃহঃ','শুক্র','শনি','রবি'];
+// btn index 0=সোম...5=শনি,6=রবি
+const BTN_TO_JSDAY=[1,2,3,4,5,6,0];
+
 let curDay=0;
 function selectDay(i,el){curDay=i;document.querySelectorAll('.wo-day-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderWO();}
 function renderWO(){
-  const d=WO[curDay],p=document.getElementById('woPlan');
-  if(d.rest){p.innerHTML=`<div class="rest-card"><div class="r-emoji">😴</div><h3>আজ বিশ্রামের দিন</h3><p>${d.restMsg}</p></div>`;return;}
+  const jsDay=BTN_TO_JSDAY[curDay];
+  const d=DAY_MAP[jsDay];
+  const p=document.getElementById('woPlan');
+  if(d.rest){
+    p.innerHTML=`<div class="rest-card"><div class="r-emoji">😴</div><h3>আজ বিশ্রামের দিন</h3><p>${d.restMsg}</p></div>`;
+    return;
+  }
+  const typeTag=d.type==='A'
+    ?`<div style="margin:0 16px 8px;background:rgba(124,106,255,.08);border:1px solid rgba(124,106,255,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--txt2);">📌 <strong style="color:var(--accent2)">টাইপ A</strong> — পুশ-আপ + কোর। পরের দিন টাইপ B করবে।</div>`
+    :`<div style="margin:0 16px 8px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.18);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--txt2);">📌 <strong style="color:var(--amber)">টাইপ B</strong> — ব্যাক মাসল + লেগ। পরের দিন টাইপ A করবে।</div>`;
   const badges=d.badges.map(b=>`<span class="wo-badge" style="background:${b.c};color:${b.tc};border:1px solid ${b.tc}44;">${b.t}</span>`).join('');
   const exHTML=d.exs.map((e,i)=>`
     <div class="ex-card" id="ex${i}">
@@ -780,9 +861,10 @@ function renderWO(){
         <div class="ex-tips">${e.tips.map(t=>`<div class="ex-tip">${t}</div>`).join('')}</div>
       </div></div>
     </div>`).join('');
-  p.innerHTML=`<div class="wo-header"><div class="wo-day-name">${d.name}</div><div class="wo-day-sub">${d.sub}</div><div class="wo-focus-badges">${badges}</div></div><div class="exercise-list">${exHTML}</div>`;
+  p.innerHTML=`<div class="wo-header"><div class="wo-day-name">${d.name}</div><div class="wo-day-sub">${d.sub}</div><div class="wo-focus-badges">${badges}</div></div>${typeTag}<div class="exercise-list">${exHTML}</div>`;
 }
-renderWO();
+// Auto-select today
+(function(){const today=new Date().getDay();const btnIdx=[6,0,1,2,3,4,5][today];document.querySelectorAll('.wo-day-btn')[btnIdx].click();})();
 
 // ── 60-Day Calendar
 // Start: 26 Mar 2026, End: 24 May 2026
@@ -924,6 +1006,18 @@ function calcBMR(){
   if(!h||!w||!a||h<50||w<10||a<5||a>120){showToast('সঠিক তথ্য দাও');return;}
   // Mifflin-St Jeor
   let bmr=selGenderVal==='M'?(10*w)+(6.25*h)-(5*a)+5:(10*w)+(6.25*h)-(5*a)-161;
+  const tdee=bmr*actM// ── BMR Calculator
+let selGenderVal='M',selActVal=1;
+const actMult=[1.2,1.375,1.55,1.725];
+function selGender(g){selGenderVal=g;document.getElementById('genderM').classList.toggle('sel',g==='M');document.getElementById('genderF').classList.toggle('sel',g==='F');}
+function selAct(n){selActVal=n;for(let i=1;i<=4;i++)document.getElementById('act'+i).classList.toggle('sel',i===n);}
+function calcBMR(){
+  const h=parseFloat(document.getElementById('bmrHeight').value);
+  const w=parseFloat(document.getElementById('bmrWeight').value);
+  const a=parseFloat(document.getElementById('bmrAge').value);
+  if(!h||!w||!a||h<50||w<10||a<5||a>120){showToast('সঠিক তথ্য দাও');return;}
+  // Mifflin-St Jeor
+  let bmr=selGenderVal==='M'?(10*w)+(6.25*h)-(5*a)+5:(10*w)+(6.25*h)-(5*a)-161;
   const tdee=bmr*actMult[selActVal-1];
   const res=document.getElementById('bmrResult');res.classList.add('show');
   document.getElementById('bmrVal').textContent=Math.round(bmr).toString().replace(/[0-9]/g,d=>bn[d]);
@@ -941,6 +1035,84 @@ function calcBMR(){
     <div class="bmr-cat" style="border-color:rgba(34,211,200,.3)"><span class="bmr-cat-name" style="color:var(--teal)">ওজন বাড়াতে (সারপ্লাস)</span><span class="bmr-cat-val" style="color:var(--teal)">${Math.round(tdee+300)} ক্যালোরি</span></div>
     <div class="bmr-cat"><span class="bmr-cat-name">ওজন কমাতে (ডেফিসিট)</span><span class="bmr-cat-val">${Math.round(tdee-500)} ক্যালোরি</span></div>`;
 }
+
+// ── AI Chat
+const AI_SYSTEM=`তুমি একজন বাংলাদেশী ফিটনেস ও স্বাস্থ্য বিশেষজ্ঞ। ব্যবহারকারী একজন তরুণ যার শরীর পাতলা, সে ওজন বাড়াতে চায় এবং বাসায় ব্যায়াম করে। তার রুটিন: শনি = পুশ-আপ + কোর, রবি = ব্যাক + লেগ, এভাবে একদিন পরপর চলে, শুক্রবার বিশ্রাম। খাবারে আছে দিনে ১টি ডিম ও ১ গ্লাস দুধ, বাকি ঘরের সাধারণ খাবার। সে রাত ১২-১২:৩০ টায় ব্যায়াম করে এবং ভর্তি পরীক্ষার প্রস্তুতি নিচ্ছে।
+
+সব উত্তর বাংলায় দাও। সংক্ষিপ্ত, সহজ ও বাস্তবসম্মত পরামর্শ দাও। অতিরিক্ত সাপ্লিমেন্ট বা ব্যয়বহুল খাবার সাজেস্ট করবে না। উত্তর ২-৫ বাক্যে দাও যদি না বিস্তারিত চাওয়া হয়।`;
+
+let aiHistory=[
+  {role:'user',content:'আমি তোমার সাথে কথা বলতে চাই'},
+  {role:'assistant',content:'আস-সালামু আলাইকুম! আমি তোমার স্বাস্থ্য সহায়ক। কী জানতে চাও?'}
+];
+let aiLoading=false;
+
+function timeNow(){const n=new Date();let h=n.getHours(),m=n.getMinutes();const p=h>=12?'PM':'AM';h=h%12||12;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ${p}`;}
+
+function addMsg(role,text){
+  const box=document.getElementById('aiMessages');
+  const div=document.createElement('div');
+  div.className=`ai-msg ${role}`;
+  div.innerHTML=`<div class="ai-bubble">${text.replace(/\n/g,'<br>')}</div><div class="ai-time">${timeNow()}</div>`;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+  return div;
+}
+
+function addTyping(){
+  const box=document.getElementById('aiMessages');
+  const div=document.createElement('div');
+  div.className='ai-msg bot';div.id='aiTypingMsg';
+  div.innerHTML=`<div class="ai-typing"><span></span><span></span><span></span></div>`;
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+
+function removeTyping(){const t=document.getElementById('aiTypingMsg');if(t)t.remove();}
+
+async function sendAI(){
+  if(aiLoading)return;
+  const inp=document.getElementById('aiInput');
+  const msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';inp.style.height='auto';
+  addMsg('user',msg);
+  aiHistory.push({role:'user',content:msg});
+  aiLoading=true;
+  addTyping();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:600,
+        system:AI_SYSTEM,
+        messages:aiHistory.slice(-10)
+      })
+    });
+    const data=await res.json();
+    removeTyping();
+    const reply=data.content?.[0]?.text||'দুঃখিত, এই মুহূর্তে উত্তর দিতে পারছি না।';
+    aiHistory.push({role:'assistant',content:reply});
+    addMsg('bot',reply);
+  }catch(e){
+    removeTyping();
+    addMsg('bot','নেটওয়ার্ক সমস্যা। একটু পরে আবার চেষ্টা করো।');
+  }
+  aiLoading=false;
+}
+
+function quickQ(btn){
+  document.getElementById('aiInput').value=btn.textContent;
+  sendAI();
+}
+
+// Auto-resize textarea
+document.getElementById('aiInput').addEventListener('input',function(){
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,80)+'px';
+});
 </script>
 </body>
 </html>
